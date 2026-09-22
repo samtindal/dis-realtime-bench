@@ -133,8 +133,12 @@ struct EntityState {
 inline constexpr std::size_t kEspduSize = 144;
 inline constexpr std::size_t kCount = 1024;  // 147,456 B corpus: stays cache-resident
 
+// Inlining boundary: explicit and identical in every language and harness. Left to the
+// optimizer, whether decode is inlined into the timed loop changed with the harness and the
+// compiler (clang: never; gcc: always; Rust: only under Criterion), swinging results ~2x.
+// The unit measured is one call, as in real per-datagram use.
 template <class Load>
-bool decode_espdu(const std::uint8_t* buf, std::size_t len, EntityState& out) noexcept {
+[[gnu::noinline]] bool decode_espdu(const std::uint8_t* buf, std::size_t len, EntityState& out) noexcept {
   Reader<Load> r{buf, len, 0};
   std::uint8_t version, exercise, pdu_type, family, pad8;
   std::uint32_t timestamp;
@@ -209,7 +213,8 @@ inline Mat3 dcm_from_euler(double psi, double theta, double phi) noexcept {
 
 // DRM_RVB: body-frame velocity and acceleration, rotating.
 // P(t) = P0 + R0^T (R1 V0 + R2 A0)
-inline void drm_rvb(const double p0[3], const double v0[3], const double a0[3], const double w[3],
+// Not inlined, for the same reason as decode_espdu.
+[[gnu::noinline]] inline void drm_rvb(const double p0[3], const double v0[3], const double a0[3], const double w[3],
                     double psi, double theta, double phi, double t, double out[3]) noexcept {
   const Mat3 r0 = dcm_from_euler(psi, theta, phi);
   const double w2 = w[0] * w[0] + w[1] * w[1] + w[2] * w[2];

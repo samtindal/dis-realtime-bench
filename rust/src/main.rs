@@ -1,6 +1,6 @@
 //! Dependency-free harness, Rust side. Parallel in structure to cpp/bench.cpp.
 //!
-//!   bench run [--toolchain LABEL] [--round N] [--reps 25] [--warmup-ms 1000]
+//!   bench run [--toolchain LABEL] [--round N] [--reps 200] [--warmup-ms 1000]
 //!   bench dump
 
 use std::hint::black_box;
@@ -75,10 +75,13 @@ fn cmd_run(o: &Options) {
     let corpus = build_corpus();
     let dr_in = build_dr_inputs();
     let mut acc = 0.0;
-    let mut out = io::stdout().lock();
+    // Rows are buffered and written once at the end. Rust's stdout is line-buffered even when
+    // piped, so writing a row per batch made a write() syscall between timed batches.
+    let mut out = Vec::<u8>::with_capacity(64 * 1024);
     measure(o, &mut out, "decode", Idiomatic::NAME, || decode_batch::<Idiomatic>(&corpus, &mut acc));
     measure(o, &mut out, "decode", Shift::NAME, || decode_batch::<Shift>(&corpus, &mut acc));
     measure(o, &mut out, "dr", "default", || dr_batch(&dr_in, &mut acc));
+    io::stdout().lock().write_all(&out).expect("write results");
     eprintln!("checksum {acc:.6e}");
 }
 
@@ -96,14 +99,14 @@ fn main() -> ExitCode {
             ExitCode::SUCCESS
         }
         Some("run") => {
-            let mut o = Options { toolchain: env!("DIS_TOOLCHAIN").into(), round: 0, reps: 25, warmup_ms: 1000 };
+            let mut o = Options { toolchain: env!("DIS_TOOLCHAIN").into(), round: 0, reps: 200, warmup_ms: 1000 };
             let mut it = args[1..].iter();
             while let Some(flag) = it.next() {
                 let Some(v) = it.next() else { return usage() };
                 match flag.as_str() {
                     "--toolchain" => o.toolchain = v.clone(),
                     "--round" => o.round = v.parse().unwrap_or(0),
-                    "--reps" => o.reps = v.parse().unwrap_or(25),
+                    "--reps" => o.reps = v.parse().unwrap_or(200),
                     "--warmup-ms" => o.warmup_ms = v.parse().unwrap_or(1000),
                     _ => return usage(),
                 }

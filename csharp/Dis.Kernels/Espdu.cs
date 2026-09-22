@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+
 namespace Dis.Kernels;
 
 public static class Espdu
@@ -5,6 +7,11 @@ public static class Espdu
     public const int Size = 144;
 
     /// <summary>Decodes one Entity State PDU. Returns false on malformed input; never throws.</summary>
+    /// <remarks>
+    /// Inlining boundary: explicit and identical in every language and harness (see
+    /// cpp/include/kernels.hpp). The unit measured is one call, as in real per-datagram use.
+    /// </remarks>
+    [MethodImpl(MethodImplOptions.NoInlining)]
     public static bool Decode<L>(ReadOnlySpan<byte> buf, ref EntityState o) where L : struct, ILoad
     {
         var r = new Reader<L>(buf);

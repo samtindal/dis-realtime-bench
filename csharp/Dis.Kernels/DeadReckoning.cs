@@ -35,6 +35,7 @@ public static class DeadReckoning
     }
 
     /// <summary>DRM_RVB: body-frame velocity and acceleration, rotating. P(t) = P0 + R0^T (R1 V0 + R2 A0).</summary>
+    [MethodImpl(MethodImplOptions.NoInlining)] // same boundary rule as Espdu.Decode
     public static void DrmRvb(in D3 p0, in D3 v0, in D3 a0, in D3 w,
                               double psi, double theta, double phi, double t, out D3 result)
     {

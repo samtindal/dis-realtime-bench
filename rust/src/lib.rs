@@ -116,7 +116,11 @@ pub struct EntityState {
     pub marking: [u8; 11],
 }
 
-#[inline]
+/// Inlining boundary: explicit and identical in every language and harness. Left to the
+/// optimizer, whether decode is inlined into the timed loop changed with the harness and the
+/// compiler (clang: never; gcc: always; Rust: only under Criterion), swinging results ~2x.
+/// The unit measured is one call, as in real per-datagram use.
+#[inline(never)]
 pub fn decode_espdu<L: Load>(buf: &[u8]) -> Option<EntityState> {
     let mut r = Reader::<L>::new(buf);
     let _version = r.u8()?;
@@ -202,7 +206,8 @@ fn dcm_from_euler(psi: f64, theta: f64, phi: f64) -> Mat3 {
 
 /// DRM_RVB: body-frame velocity and acceleration, rotating.
 /// P(t) = P0 + R0^T (R1 V0 + R2 A0)
-#[inline]
+/// Not inlined, for the same reason as `decode_espdu`.
+#[inline(never)]
 #[allow(clippy::too_many_arguments)]
 pub fn drm_rvb(
     p0: &[f64; 3], v0: &[f64; 3], a0: &[f64; 3], w: &[f64; 3],

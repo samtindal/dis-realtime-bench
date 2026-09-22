@@ -1,6 +1,6 @@
 // Dependency-free harness, C# side. Parallel in structure to cpp/bench.cpp and rust/src/main.rs.
 //
-//   Dis.Bench.Aot run [--toolchain LABEL] [--round N] [--reps 25] [--warmup-ms 1000]
+//   Dis.Bench.Aot run [--toolchain LABEL] [--round N] [--reps 200] [--warmup-ms 1000]
 //   Dis.Bench.Aot dump
 using System.Diagnostics;
 using System.Globalization;
@@ -98,7 +98,7 @@ static class Program
         }
         if (args[0] != "run") return Usage();
 
-        var o = new Options(DefaultToolchain(), 0, 25, 1000);
+        var o = new Options(DefaultToolchain(), 0, 200, 1000);
         for (int i = 1; i < args.Length; i += 2)
         {
             if (i + 1 >= args.Length) return Usage();
