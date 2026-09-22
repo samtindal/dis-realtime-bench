@@ -354,6 +354,13 @@ pub fn write_dump(w: &mut impl Write) -> io::Result<()> {
         let out = drm_rvb(&d.p0[i], &d.v0[i], &d.a0[i], &d.w[i], psi, theta, phi, DR_DT);
         writeln!(w, "dr {i} {:016x} {:016x} {:016x}", out[0].to_bits(), out[1].to_bits(), out[2].to_bits())?;
     }
+    // Displacement only (P0 = 0). The full outputs above are ~1e6 m, so a last-bit
+    // difference in the ~0.5 m displacement would be rounded away by the final addition.
+    for i in 0..COUNT {
+        let [psi, theta, phi] = d.eul[i];
+        let out = drm_rvb(&[0.0; 3], &d.v0[i], &d.a0[i], &d.w[i], psi, theta, phi, DR_DT);
+        writeln!(w, "dr_disp {i} {:016x} {:016x} {:016x}", out[0].to_bits(), out[1].to_bits(), out[2].to_bits())?;
+    }
     let [psi, theta, phi] = d.eul[0];
     let out = drm_rvb(&d.p0[0], &d.v0[0], &d.a0[0], &[0.0; 3], psi, theta, phi, DR_DT);
     writeln!(w, "dr_zero {:016x} {:016x} {:016x}", out[0].to_bits(), out[1].to_bits(), out[2].to_bits())

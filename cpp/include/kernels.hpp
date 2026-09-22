@@ -409,6 +409,15 @@ inline void write_dump(std::FILE* f) {
     std::snprintf(prefix, sizeof prefix, "dr %zu", i);
     detail::dump_dr_line(f, prefix, out);
   }
+  // Displacement only (P0 = 0). The full outputs above are ~1e6 m, so a last-bit
+  // difference in the ~0.5 m displacement would be rounded away by the final addition.
+  const double origin[3] = {0.0, 0.0, 0.0};
+  for (std::size_t i = 0; i < kCount; ++i) {
+    drm_rvb(origin, &in.v0[i * 3], &in.a0[i * 3], &in.w[i * 3], in.eul[i * 3], in.eul[i * 3 + 1],
+            in.eul[i * 3 + 2], kDrDt, out);
+    std::snprintf(prefix, sizeof prefix, "dr_disp %zu", i);
+    detail::dump_dr_line(f, prefix, out);
+  }
   const double zero_w[3] = {0.0, 0.0, 0.0};
   drm_rvb(&in.p0[0], &in.v0[0], &in.a0[0], zero_w, in.eul[0], in.eul[1], in.eul[2], kDrDt, out);
   detail::dump_dr_line(f, "dr_zero", out);
