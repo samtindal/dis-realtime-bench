@@ -1,0 +1,19 @@
+[package]
+name = "dis-bench"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[lib]
+name = "dis_bench"
+path = "src/lib.rs"
+
+[[bin]]
+name = "bench"
+path = "src/main.rs"
+
+[profile.release]
+# The C++ kernels are header-only, so they inline into the harness. The Rust kernels live in
+# a library crate; fat LTO + one codegen unit gives the optimizer the same whole-program view.
+lto = "fat"
+codegen-units = 1
