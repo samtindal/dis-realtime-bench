@@ -35,6 +35,28 @@ def functions(binary):
     return dict(zip(demangle([m[1:] if m.startswith("__Z") else m for m in mangled]), funcs.values()))
 
 
+def shorten(name):
+    """'bool dis::decode_espdu<dis::LoadBswap>(unsigned char const*, ...) (.constprop.0)'
+    -> 'decode_espdu<LoadBswap> (.constprop.0)'."""
+    clone = " ".join(re.findall(r"\(\.[a-z]+\.\d+\)", name))
+    name = re.sub(r"\s*\(\.[a-z]+\.\d+\)", "", name)
+    name = re.sub(r"^(bool|void)\s+", "", name)
+    depth, cut = 0, len(name)
+    for i, ch in enumerate(name):  # strip the parameter list (first '(' at template depth 0)
+        depth += ch == "<"
+        depth -= ch == ">"
+        if ch == "(" and depth == 0:
+            cut = i
+            break
+    name = name[:cut].replace("dis_bench::", "").replace("dis::", "")
+    name = re.sub(r"::h([0-9a-f]{6})[0-9a-f]{10}$", r" [\1]", name)  # Rust hash, abbreviated
+    return f"{name} {clone}".strip()
+
+
+def call_name(sym):
+    return shorten(demangle(["_" + sym])[0]) if sym.startswith("ZN") else sym
+
+
 def stats(insns):
     ops = Counter(op for op, _ in insns)
     calls = Counter()
@@ -50,7 +72,7 @@ def stats(insns):
         "stores": sum(n for op, n in ops.items() if op.startswith("st")),
         "fdiv": ops.get("fdiv", 0),
         "fmadd": sum(n for op, n in ops.items() if op in ("fmadd", "fmsub", "fnmadd", "fnmsub")),
-        "calls": ", ".join(f"{k}×{v}" for k, v in sorted(calls.items())) or "—",
+        "calls": ", ".join(f"{call_name(k)}×{v}" for k, v in sorted(calls.items())) or "—",
     }
 
 
@@ -67,8 +89,7 @@ def main(argv):
         for name, insns in sorted(functions(binary).items()):
             if not any(p.search(name) for p in FUNCS.values()) or "dump" in name:
                 continue
-            short = re.sub(r"\(.*\)", "", name.split("::")[-1] if "::" in name else name)
-            short = short.replace("unsigned char const*, unsigned long, dis::EntityState&", "")
+            short = shorten(name)
             s = stats(insns)
             rows.append(f"| {label} | `{short}` | {s['insns']} | {s['cond_branches']} | {s['rev']} | "
                         f"{s['loads']} | {s['stores']} | {s['fdiv']} | {s['fmadd']} | {s['calls']} |")
