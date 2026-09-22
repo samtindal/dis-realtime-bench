@@ -34,6 +34,12 @@ export CARGO_TARGET_DIR="$BUILD/rust"
 export DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
 
 step() { printf '\n==> %s\n' "$*"; }
+# Runs a build command quietly; on failure prints the tail of its log and stops the run.
+# Never swallow a build failure: stale binaries from an earlier build would be timed instead.
+quiet() {
+  local log="$BUILD/last-build.log"
+  "$@" > "$log" 2>&1 || { echo "FAILED: $*" >&2; tail -30 "$log" >&2; exit 1; }
+}
 need() {
   command -v "$1" >/dev/null 2>&1 || { echo "missing '$1'. Install: $2" >&2; exit 1; }
 }
@@ -58,15 +64,17 @@ echo "machine: $machine   output: $OUT   rounds: $ROUNDS   reps: $REPS"
 
 # ---------------------------------------------------------------------- build
 step "build C++"
-cmake -S "$ROOT/cpp" -B "$BUILD/cpp-clang" -DCMAKE_CXX_COMPILER="$CXX_CLANG" >/dev/null
-cmake --build "$BUILD/cpp-clang" -j >/dev/null
+quiet cmake -S "$ROOT/cpp" -B "$BUILD/cpp-clang" -DCMAKE_CXX_COMPILER="$CXX_CLANG"
+quiet cmake --build "$BUILD/cpp-clang" -j
 if [[ $GCC == 1 ]]; then
-  cmake -S "$ROOT/cpp" -B "$BUILD/cpp-gcc" -DCMAKE_CXX_COMPILER="$GXX" >/dev/null
-  cmake --build "$BUILD/cpp-gcc" -j >/dev/null
+  quiet cmake -S "$ROOT/cpp" -B "$BUILD/cpp-gcc" -DCMAKE_CXX_COMPILER="$GXX"
+  quiet cmake --build "$BUILD/cpp-gcc" -j
 fi
 
 step "build Rust"
-(cd "$ROOT/rust" && cargo build --release -q && { [[ $QUICK == 1 ]] || cargo bench --no-run -q; })
+# Run from rust/: cargo reads .cargo/config.toml (target-cpu=native) from the current
+# directory, not from --manifest-path.
+(cd "$ROOT/rust" && quiet cargo build --release && { [[ $QUICK == 1 ]] || quiet cargo bench --no-run; })
 
 AOT_BIN="$BUILD/dotnet/publish/Dis.Bench.Aot/release_osx-arm64/Dis.Bench.Aot"
 JIT_DLL="$BUILD/dotnet/bin/Dis.Bench.Aot/release/Dis.Bench.Aot.dll"
@@ -74,11 +82,11 @@ if [[ $DOTNET == 1 ]]; then
   step "build C# (CoreCLR + NativeAOT)"
   rid="$(dotnet --info | awk '/RID:/{print $2; exit}')"
   AOT_BIN="$BUILD/dotnet/publish/Dis.Bench.Aot/release_$rid/Dis.Bench.Aot"
+  # Run from csharp/ so its global.json (SDK pin, test runner) applies.
   (cd "$ROOT/csharp" &&
-    dotnet build Dis.Bench.Aot -c Release -v q -nologo | grep -E ' error ' || true
-    dotnet publish Dis.Bench.Aot -c Release -r "$rid" -p:PublishAot=true -v q -nologo | grep -E ' error ' || true
-    [[ $QUICK == 1 ]] || dotnet build Dis.Bench -c Release -v q -nologo | grep -E ' error ' || true)
-  [[ -x "$AOT_BIN" && -f "$JIT_DLL" ]] || { echo "C# build failed" >&2; exit 1; }
+    quiet dotnet build Dis.Bench.Aot -c Release -nologo &&
+    quiet dotnet publish Dis.Bench.Aot -c Release -r "$rid" -p:PublishAot=true -nologo &&
+    { [[ $QUICK == 1 ]] || quiet dotnet build Dis.Bench -c Release -nologo; })
 fi
 
 # The dependency-free binaries, in the fixed order each round runs them. Invoked by name so
