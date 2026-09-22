@@ -1,7 +1,7 @@
 // Dependency-free harness, C++ side. Parallel in structure to rust/src/main.rs and
 // csharp/Dis.Bench.Aot/Program.cs, so the diff between them is the language and nothing else.
 //
-//   bench run [--toolchain LABEL] [--round N] [--reps 25] [--warmup-ms 500]
+//   bench run [--toolchain LABEL] [--round N] [--reps 25] [--warmup-ms 1000]
 //   bench dump
 //   bench calibrate
 #include <algorithm>
@@ -94,7 +94,7 @@ struct Options {
   std::string toolchain = default_toolchain();
   int round = 0;
   int reps = 25;
-  int warmup_ms = 500;
+  int warmup_ms = 1000;
 };
 
 template <class Batch>

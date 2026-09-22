@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="Dis.Bench.Aot/Dis.Bench.Aot.csproj" />
+  <Project Path="Dis.Kernels/Dis.Kernels.csproj" />
+  <Project Path="Dis.Tests/Dis.Tests.csproj" />
+</Solution>

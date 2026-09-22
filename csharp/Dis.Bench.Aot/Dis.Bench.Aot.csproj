@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Dependency-free harness. Runs on CoreCLR (dotnet bin/.../Dis.Bench.Aot.dll) and, when
+       published with -p:PublishAot=true, as a NativeAOT executable. Same source, two runtimes.
+       PublishAot is deliberately NOT set here: setting it in the project also writes AOT feature
+       switches (IsDynamicCodeSupported=false, size-optimized LINQ, ...) into the JIT build's
+       runtimeconfig, so the "JIT" measurement would no longer be a default CoreCLR app. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsAotCompatible>true</IsAotCompatible>
+    <IlcInstructionSet>native</IlcInstructionSet>
+    <TieredPGO>true</TieredPGO>
+  </PropertyGroup>
+  <!-- Homebrew's source-built .NET links NativeAOT output against Homebrew openssl/brotli
+       but does not pass their library paths. Harmless elsewhere: only added if present. -->
+  <ItemGroup Condition="Exists('/opt/homebrew/opt/openssl@3/lib')">
+    <LinkerArg Include="-L/opt/homebrew/opt/openssl@3/lib" />
+    <LinkerArg Include="-L/opt/homebrew/opt/brotli/lib" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Dis.Kernels/Dis.Kernels.csproj" />
+  </ItemGroup>
+</Project>
