@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TieredPGO>true</TieredPGO>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Vetted: BenchmarkDotNet 0.15.8, verified owner, dotnet/BenchmarkDotNet. -->
+    <PackageReference Include="BenchmarkDotNet" Version="0.15.8" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Dis.Kernels/Dis.Kernels.csproj" />
+  </ItemGroup>
+</Project>
