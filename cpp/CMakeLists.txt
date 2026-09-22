@@ -24,3 +24,22 @@ target_include_directories(bench PRIVATE include)
 
 add_executable(test_kernels test_kernels.cpp)
 target_include_directories(test_kernels PRIVATE include)
+
+# Google Benchmark, pinned by release tarball hash (vetted: google/benchmark v1.9.5, 2026-01-21).
+option(DIS_GBENCH "Build the Google Benchmark harness" ON)
+if(DIS_GBENCH)
+  include(FetchContent)
+  set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
+  set(BENCHMARK_ENABLE_GTEST_TESTS OFF CACHE BOOL "" FORCE)
+  set(BENCHMARK_ENABLE_INSTALL OFF CACHE BOOL "" FORCE)
+  set(BENCHMARK_ENABLE_WERROR OFF CACHE BOOL "" FORCE)
+  FetchContent_Declare(googlebenchmark
+    URL https://github.com/google/benchmark/archive/refs/tags/v1.9.5.tar.gz
+    URL_HASH SHA256=9631341c82bac4a288bef951f8b26b41f69021794184ece969f8473977eaa340
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
+  FetchContent_MakeAvailable(googlebenchmark)
+
+  add_executable(bench_gbench bench_gbench.cpp)
+  target_include_directories(bench_gbench PRIVATE include)
+  target_link_libraries(bench_gbench PRIVATE benchmark::benchmark)
+endif()
