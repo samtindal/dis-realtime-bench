@@ -157,6 +157,15 @@ if [[ $QUICK == 0 ]]; then
   fi
 fi
 
+# ----------------------------------------------------- disassembly (mechanism evidence)
+if [[ $QUICK == 0 && "$(uname -s)" == Darwin ]]; then
+  step "disassembly statistics"
+  dis_args=("clang=$BUILD/cpp-clang/bench")
+  [[ $GCC == 1 ]] && dis_args+=("gcc=$BUILD/cpp-gcc/bench")
+  dis_args+=("rust=$BUILD/rust/release/bench")
+  python3 "$ROOT/scripts/disasm.py" "${dis_args[@]}" --out "$OUT/disasm-$machine.md" >/dev/null
+fi
+
 # ------------------------------------------------------------ environment record
 {
   echo "date: $(date -u +%Y-%m-%dT%H:%M:%SZ)"

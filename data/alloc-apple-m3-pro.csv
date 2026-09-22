@@ -1,0 +1,4 @@
+lang,toolchain,kernel,variant,bytes_per_op,gen0
+csharp,dotnet-10.0.12-jit,decode,idiomatic,0,0
+csharp,dotnet-10.0.12-jit,decode,shift,0,0
+csharp,dotnet-10.0.12-jit,dr,default,0,0

@@ -1,0 +1,15 @@
+date: 2026-09-22T20:00:11Z
+machine: apple-m3-pro
+cpu: Apple M3 Pro
+cores: perf=5 eff=6
+os: macOS 26.6.2
+power: Now drawing from 'Battery Power'
+calibrated_ghz: 4.020
+clang: Apple clang version 21.0.0 (clang-2100.3.34.2)
+gcc: g++-16 (Homebrew GCC 16.2.0) 16.2.0
+cxx_flags: -std=c++20 -O3 -mcpu=native -ffp-contract=off
+rustc: rustc 1.95.0 (59807616e 2026-04-14)
+rust_flags: -C target-cpu=native, release profile lto=fat codegen-units=1
+dotnet_sdk: 10.0.401
+dotnet_runtime: dotnet-10.0.12-jit  (TieredPGO on, default)
+harness: rounds=10 reps=200 warmup_ms=1000 quick=0
